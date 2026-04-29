@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Track Feature — Case Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #0f0e0d;
+  --paper: #f5f3ef;
+  --warm: #e8e3da;
+  --stone: #b8b2a7;
+  --accent: #c94f2a;
+  --accent-light: #f0cfc5;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Instrument Sans', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* ── PROGRESS BAR ── */
+#progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  width: 0%;
+  z-index: 999;
+  transition: width 0.1s linear;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 18px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(245, 243, 239, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+nav.scrolled { border-color: var(--warm); }
+.nav-logo { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; color: var(--stone); text-transform: uppercase; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--stone);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--ink); }
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 48px 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-bg-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--serif);
+  font-size: clamp(120px, 20vw, 280px);
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0,0,0,0.06);
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.02em;
+}
+
+.hero-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s forwards;
+}
+
+.hero-title {
+  font-family: var(--serif);
+  font-size: clamp(48px, 7vw, 100px);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  max-width: 800px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s forwards;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-meta {
+  display: flex;
+  gap: 48px;
+  margin-top: 48px;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s forwards;
+}
+.hero-meta-item { display: flex; flex-direction: column; gap: 4px; }
+.hero-meta-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--stone); text-transform: uppercase; }
+.hero-meta-value { font-size: 13px; font-weight: 500; color: var(--ink); }
+
+.scroll-hint {
+  position: absolute;
+  bottom: 32px;
+  right: 48px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--stone);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  animation: fadeIn 1s 1.2s forwards;
+}
+.scroll-hint::before {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--stone);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 0.6; }
+}
+
+/* ── SECTION WRAPPER ── */
+.section {
+  padding: 120px 48px;
+  border-top: 1px solid var(--warm);
+  position: relative;
+}
+
+.section-number {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: clamp(36px, 4vw, 60px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 60px;
+  max-width: 600px;
+}
+
+/* ── TWO-COL LAYOUT ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 32px;
+}
+
+/* ── BODY COPY ── */
+p {
+  font-size: 16px;
+  line-height: 1.75;
+  color: #3a3632;
+  max-width: 580px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--warm);
+  border-radius: 4px;
+  padding: 28px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.card-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--stone);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.card h3 {
+  font-family: var(--serif);
+  font-size: 22px;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.card p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #5a5550;
+  max-width: none;
+}
+
+/* ── PULL QUOTE ── */
+.pull-quote {
+  font-family: var(--serif);
+  font-size: clamp(22px, 2.5vw, 34px);
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--ink);
+  border-left: 3px solid var(--accent);
+  padding-left: 32px;
+  margin: 60px 0;
+  max-width: 680px;
+}
+
+/* ── FINDING ROWS ── */
+.finding {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--warm);
+}
+.finding:first-child { border-top: 1px solid var(--warm); }
+.finding-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  padding-top: 3px;
+}
+.finding-text { font-size: 15px; line-height: 1.7; color: #3a3632; max-width: none; }
+.finding-text strong { color: var(--ink); font-weight: 600; }
+
+/* ── PRINCIPLE TAGS ── */
+.tag-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--stone);
+  color: var(--stone);
+  letter-spacing: 0.05em;
+}
+.tag.filled { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* ── PROTOTYPE FRAME ── */
+.proto-frame {
+  background: var(--ink);
+  border-radius: 8px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  position: relative;
+  overflow: hidden;
+}
+.proto-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(201,79,42,0.15) 0%, transparent 60%);
+}
+
+.phone-mockup {
+  width: 200px;
+  background: #1a1917;
+  border-radius: 28px;
+  border: 6px solid #2a2724;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.phone-screen {
+  background: #f5f3ef;
+  padding: 16px;
+  min-height: 360px;
+}
+
+.phone-bar {
+  height: 8px;
+  background: #e8e3da;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.phone-bar.short { width: 55%; }
+.phone-bar.med { width: 75%; }
+.phone-bar.tall { width: 90%; height: 40px; border-radius: 6px; margin-bottom: 12px; }
+.phone-bar.accent { background: #c94f2a; opacity: 0.8; }
+
+/* ── USER FEEDBACK ── */
+.feedback-card {
+  background: white;
+  border: 1px solid var(--warm);
+  border-radius: 4px;
+  padding: 24px;
+  position: relative;
+}
+.feedback-card::before {
+  content: '"';
+  font-family: var(--serif);
+  font-size: 60px;
+  color: var(--accent-light);
+  position: absolute;
+  top: 8px;
+  left: 16px;
+  line-height: 1;
+}
+.feedback-person {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.feedback-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3a3632;
+  padding-top: 16px;
+  max-width: none;
+}
+
+/* ── ITERATION ARROW ── */
+.iteration-flow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 40px 0;
+}
+.iter-step {
+  background: var(--warm);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 3px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.iter-arrow {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 18px;
+}
+
+/* ── SECTION DIVIDER ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 48px;
+  opacity: 0.3;
+}
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ink);
+}
+.divider span {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ── FOOTER ── */
+footer {
+  padding: 60px 48px;
+  border-top: 1px solid var(--warm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+footer p { font-family: var(--mono); font-size: 11px; color: var(--stone); letter-spacing: 0.08em; max-width: none; }
+
+/* ── GIF PLACEHOLDER ── */
+.gif-slot {
+  background: var(--warm);
+  border: 2px dashed var(--stone);
+  border-radius: 4px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.gif-slot span {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--stone);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  nav { padding: 16px 24px; }
+  .nav-links { display: none; }
+  #hero, .section { padding-left: 24px; padding-right: 24px; }
+  .two-col, .three-col { grid-template-columns: 1fr; gap: 24px; }
+  .hero-meta { flex-wrap: wrap; gap: 24px; }
+  footer { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <div class="nav-logo">Case Study — 2025</div>
+  <div class="nav-links">
+    <a href="#background">Background</a>
+    <a href="#research">Research</a>
+    <a href="#inspiration">Inspiration</a>
+    <a href="#prototyping">Prototyping</a>
+    <a href="#testing">Testing</a>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-bg-text">Vocal</div>
+  <div class="hero-tag">UX Case Study · Guitar Learning App</div>
+  <h1 class="hero-title">Designing the <em>Vocal Track</em> Feature</h1>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Role</span>
+      <span class="hero-meta-value">Product Designer</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Type</span>
+      <span class="hero-meta-value">Ed-Tech · Mobile</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Methods</span>
+      <span class="hero-meta-value">Contextual Inquiry · Prototyping · User Testing</span>
+    </div>
+    <div class="hero-meta-item">
+      <span class="hero-meta-label">Fidelity</span>
+      <span class="hero-meta-value">Lo-Fi → Mid-Fi HTML Prototype</span>
+    </div>
+  </div>
+  <div class="scroll-hint">Scroll to explore</div>
+</section>
+
+<!-- ── 01 BACKGROUND ── -->
+<section class="section" id="background">
+  <div class="section-number reveal">01 — Background & Pain Points</div>
+  <h2 class="section-title reveal reveal-delay-1">The gap between playing guitar <em>and</em> using it.</h2>
+
+  <div class="two-col">
+    <div>
+      <p class="reveal reveal-delay-1">Most guitar learning apps treat the instrument in isolation — chords, tabs, strumming patterns. But the moment a learner tries to sing along or play with a vocalist, they hit a wall that the app was never designed to help them through.</p>
+      <p class="reveal reveal-delay-2" style="margin-top: 20px;">This feature was designed for two specific users: the beginner guitarist who is also learning to sing, and the guitarist who wants to play alongside a vocalist in a band setting. Both share the same core problem — there is no bridge between learning guitar and using it in a musical context with a voice.</p>
+
+      <div class="pull-quote reveal">
+        "I never know if I'm even in the right key when I try to sing along."
+      </div>
+    </div>
+
+    <div>
+      <div class="card reveal reveal-delay-1">
+        <div class="card-label">User Type 1</div>
+        <h3>Beginner guitarist learning to sing</h3>
+        <p>Has no pitch reference. Doesn't know if their voice is in the right key. Feels anxious about singing and playing at the same time. Needs scaffolding and clear feedback.</p>
+        <div class="tag-group">
+          <span class="tag">No pitch reference</span>
+          <span class="tag">High anxiety</span>
+          <span class="tag">Needs scaffolding</span>
+        </div>
+      </div>
+
+      <div class="card reveal reveal-delay-2" style="margin-top: 20px;">
+        <div class="card-label">User Type 2</div>
+        <h3>Guitarist playing with a vocalist</h3>
+        <p>Needs to transpose songs to match their singer's range quickly. Currently does this manually by ear or gives up entirely. Needs pitch-sorted tools and fast context-switching.</p>
+        <div class="tag-group">
+          <span class="tag">Manual transposition</span>
+          <span class="tag">Band context</span>
+          <span class="tag">Efficiency focus</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 02 RESEARCH ── -->
+<section class="section" id="research">
+  <div class="section-number reveal">02 — UX Research</div>
+  <h2 class="section-title reveal reveal-delay-1">Listening before designing.</h2>
+
+  <div class="two-col" style="margin-bottom: 60px;">
+    <div>
+      <p class="reveal">Research began with a contextual inquiry — observing and interviewing guitar learners in their natural practice environments. Participants were watched as they used existing guitar apps, tried to sing along, and attempted to coordinate with other musicians. Key moments of confusion and frustration were documented and grouped using affinity diagramming.</p>
+    </div>
+    <div>
+      <p class="reveal reveal-delay-1">Four major themes emerged from the affinity clusters, each becoming a direct design constraint for the feature's architecture.</p>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <div class="finding">
+      <div class="finding-num">F-01</div>
+      <div class="finding-text"><strong>Navigation complexity.</strong> Learners struggled to move fluidly between chord view, practice mode, and vocal setup. Each extra screen increased drop-off risk.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">F-02</div>
+      <div class="finding-text"><strong>Pitch reference gap.</strong> Beginners had no way to know if they were singing in the right key. They wanted audio confirmation, not just visual indicators.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">F-03</div>
+      <div class="finding-text"><strong>Tabs as primary content.</strong> Across all users, tabs and chord diagrams were the most-used elements. Any vocal feature had to support — not compete with — that content.</div>
+    </div>
+    <div class="finding">
+      <div class="finding-num">F-04</div>
+      <div class="finding-text"><strong>Lack of closure feedback.</strong> Users finished flows without knowing what had changed or what to do next. Completion felt ambiguous rather than rewarding.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 03 INSPIRATION ── -->
+<section class="section" id="inspiration">
+  <div class="section-number reveal">03 — Design Inspirations</div>
+  <h2 class="section-title reveal reveal-delay-1">Theory meeting interface.</h2>
+
+  <div class="three-col">
+    <div class="card reveal">
+      <div class="card-label">Learning Science · Ch. 4</div>
+      <h3>Expert Blind Spot</h3>
+      <p>What feels obvious to an experienced musician is genuinely opaque to a beginner. The pitch detection screen was given step-by-step instructions because experts routinely skip steps they've forgotten were ever hard.</p>
+      <div class="tag-group"><span class="tag filled">Scaffolding</span></div>
+    </div>
+
+    <div class="card reveal reveal-delay-1">
+      <div class="card-label">Learning Science · Ch. 2</div>
+      <h3>Form Fits Function</h3>
+      <p>Tabs automatically update when a vocal track is applied so the information reorganizes itself around the learner's actual task, rather than forcing a mental translation between two different keys.</p>
+      <div class="tag-group"><span class="tag filled">Knowledge Structure</span></div>
+    </div>
+
+    <div class="card reveal reveal-delay-2">
+      <div class="card-label">Mayer's Principles</div>
+      <h3>Multimedia Learning</h3>
+      <p>Chord diagrams, written tabs, and an audio vocal reference track appear on the same screen. Multiple formats for the same content reinforce each other and deepen retention.</p>
+      <div class="tag-group"><span class="tag filled">Multimodal</span></div>
+    </div>
+
+    <div class="card reveal">
+      <div class="card-label">Nielsen Heuristics · H2-1</div>
+      <h3>Visibility of System Status</h3>
+      <p>An "Updated" pill on the tabs section and a full summary screen after applying a vocal track ensure users always know what changed and that the system responded to their action.</p>
+      <div class="tag-group"><span class="tag filled">Feedback</span></div>
+    </div>
+
+    <div class="card reveal reveal-delay-1">
+      <div class="card-label">Nielsen Heuristics · H2-6</div>
+      <h3>Recognition Over Recall</h3>
+      <p>The pitch legend (+/−/~) is shown in the track library before the list appears. Users see what badges mean rather than needing to remember it from a tooltip they read two screens ago.</p>
+      <div class="tag-group"><span class="tag filled">Usability</span></div>
+    </div>
+
+    <div class="card reveal reveal-delay-2">
+      <div class="card-label">Lecture 18 · Color</div>
+      <h3>Grayscale First</h3>
+      <p>The mid-fi prototype was designed entirely in grayscale to establish hierarchy through luminance and spacing before color is introduced — ensuring the design works structurally before it works visually.</p>
+      <div class="tag-group"><span class="tag filled">UI Principle</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 04 PROTOTYPING ── -->
+<section class="section" id="prototyping">
+  <div class="section-number reveal">04 — Low & Mid-Fidelity Prototyping</div>
+  <h2 class="section-title reveal reveal-delay-1">From sketch to clickable system.</h2>
+
+  <div class="two-col">
+    <div>
+      <p class="reveal">The process began with a hand-drawn storyboard mapping the complete flow — from the song detail view, through the vocals menu, into pitch detection or track selection, and back to the song with the vocal track applied. This lo-fi sketch established the core navigation logic before any digital work began.</p>
+
+      <div class="iteration-flow reveal" style="margin-top: 32px;">
+        <div class="iter-step">Hand sketch</div>
+        <div class="iter-arrow">→</div>
+        <div class="iter-step">Flow map</div>
+        <div class="iter-arrow">→</div>
+        <div class="iter-step">HTML mid-fi</div>
+        <div class="iter-arrow">→</div>
+        <div class="iter-step">v2 iterate</div>
+      </div>
+
+      <p class="reveal reveal-delay-1" style="margin-top: 24px;">The mid-fidelity prototype was built as a clickable HTML file. Early versions made the vocal setup the visual centerpiece of the song screen and left the practice toggle greyed out with no explanation. Three key structural changes were made after reflection:</p>
+
+      <div style="margin-top: 24px;">
+        <div class="finding reveal">
+          <div class="finding-num">v1→v2</div>
+          <div class="finding-text"><strong>Tabs reclaimed hierarchy.</strong> The chord and tab section was made the dominant visual element; vocal track moved to a supporting role.</div>
+        </div>
+        <div class="finding reveal">
+          <div class="finding-num">v1→v2</div>
+          <div class="finding-text"><strong>Disabled state explained.</strong> The locked toggle now shows a contextual note explaining why it's inactive and what to do.</div>
+        </div>
+        <div class="finding reveal">
+          <div class="finding-num">v1→v2</div>
+          <div class="finding-text"><strong>Applied summary added.</strong> A new screen between "Use This Track" and the song surface shows a clear summary of every change made.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="proto-frame reveal reveal-delay-1">
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="phone-bar short" style="height:6px;margin-bottom:16px;background:#c2bfba;"></div>
+            <div class="phone-bar tall"></div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <div style="flex:1;height:56px;background:#e8e3da;border-radius:4px;"></div>
+              <div style="flex:1;height:56px;background:#e8e3da;border-radius:4px;"></div>
+              <div style="flex:1;height:56px;background:#e8e3da;border-radius:4px;"></div>
+            </div>
+            <div class="phone-bar" style="height:32px;border-radius:20px;margin-bottom:8px;"></div>
+            <div class="phone-bar" style="height:32px;border-radius:20px;margin-bottom:8px;"></div>
+            <div class="phone-bar accent" style="height:32px;border-radius:20px;margin-bottom:16px;"></div>
+            <div class="phone-bar short" style="height:8px;"></div>
+            <div class="phone-bar med" style="height:8px;margin-top:6px;"></div>
+            <div class="phone-bar short" style="height:8px;margin-top:6px;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:16px;text-align:center;">
+        <a href="vocal-prototype-v2.html" target="_blank" style="font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:0.08em;text-decoration:none;text-transform:uppercase;border-bottom:1px solid var(--accent);padding-bottom:2px;">
+          Open Interactive Prototype →
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 05 TESTING ── -->
+<section class="section" id="testing">
+  <div class="section-number reveal">05 — User Testing & Final Prototype</div>
+  <h2 class="section-title reveal reveal-delay-1">What five users taught me.</h2>
+
+  <p class="reveal" style="margin-bottom: 48px;">Five users tested the mid-fidelity prototype in a contextual inquiry format — using it as they would during a real practice session. A consistent theme emerged: the feature was useful once understood, but the path to understanding it was unclear.</p>
+
+  <div class="three-col" style="margin-bottom: 60px;">
+    <div class="feedback-card reveal">
+      <div class="feedback-person">Person 1</div>
+      <p class="feedback-text">The feature was a bit difficult to navigate, but the addition of chord charts was extremely helpful for a guitar learner.</p>
+    </div>
+    <div class="feedback-card reveal reveal-delay-1">
+      <div class="feedback-person">Person 2</div>
+      <p class="feedback-text">The emphasis on voice adjustment could be reduced — more focus should go to the tabs, which are the main content during playing.</p>
+    </div>
+    <div class="feedback-card reveal reveal-delay-2">
+      <div class="feedback-person">Person 3</div>
+      <p class="feedback-text">Liked the UI, but needed help understanding what to do right after recording their voice.</p>
+    </div>
+    <div class="feedback-card reveal">
+      <div class="feedback-person">Person 4</div>
+      <p class="feedback-text">The interface design and flow were effective together — improvement for feedback detail would be helpful in the final screen.</p>
+    </div>
+    <div class="feedback-card reveal reveal-delay-1">
+      <div class="feedback-person">Person 5</div>
+      <p class="feedback-text">The voice feature is helpful, but needs further explanation as to why it's needed. More useful for guitar learners with specific needs.</p>
+    </div>
+  </div>
+
+  <div class="pull-quote reveal">
+    The clearest theme: users found the feature valuable once they understood it — but the path to understanding was the problem.
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3 class="reveal" style="font-family:var(--serif);font-size:26px;margin-bottom:20px;">What I changed</h3>
+      <div class="finding reveal">
+        <div class="finding-num">01</div>
+        <div class="finding-text"><strong>Added purpose framing at entry.</strong> A short explanation at the top of the vocal flow tells users why pitch matching matters before they commit to the setup — addressing the transfer problem raised by Person 5.</div>
+      </div>
+      <div class="finding reveal">
+        <div class="finding-num">02</div>
+        <div class="finding-text"><strong>Tabs made dominant.</strong> Restructured the song screen so chord and tab content leads visually, with the vocal track as a clearly supporting element — directly responding to Person 2.</div>
+      </div>
+      <div class="finding reveal">
+        <div class="finding-num">03</div>
+        <div class="finding-text"><strong>Post-recording guidance improved.</strong> The screen after recording now clearly directs users to "Choose Existing Vocal Track" as their next step — fixing the drop-off point Person 3 identified.</div>
+      </div>
+      <div class="finding reveal">
+        <div class="finding-num">04</div>
+        <div class="finding-text"><strong>Applied Summary screen added.</strong> A new confirmation screen surfaces the applied key, pitch adjustment, tab update status, and newly unlocked practice mode — giving Person 4 the closure they needed.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="gif-slot reveal reveal-delay-1">
+        <span>↑ Insert prototype GIF here</span>
+        <span style="font-size:10px;margin-top:4px;">Full end-to-end flow</span>
+      </div>
+      <div class="gif-slot reveal reveal-delay-2" style="margin-top:16px;min-height:160px;">
+        <span>↑ Insert pitch detection GIF here</span>
+        <span style="font-size:10px;margin-top:4px;">Step-by-step instructions flow</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <p>Vocal Track Feature · UX Case Study · 2025</p>
+  <p>Guitar Learning App · Product Design</p>
+</footer>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const scrolled = doc.scrollTop / (doc.scrollHeight - doc.clientHeight) * 100;
+    document.getElementById('progress').style.width = scrolled + '%';
+    document.getElementById('nav').classList.toggle('scrolled', doc.scrollTop > 40);
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

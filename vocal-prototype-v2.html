@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vocal Track — Mid-Fi Prototype v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #f0efed;
+    --surface: #ffffff;
+    --surface-2: #e8e6e3;
+    --surface-3: #d4d1cc;
+    --border: #c2bfba;
+    --text-primary: #1a1917;
+    --text-secondary: #6b6762;
+    --text-muted: #9e9b97;
+    --accent: #3a3835;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .screen {
+    display: none;
+    width: 375px;
+    min-height: 600px;
+    background: var(--surface);
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .screen.active { display: flex; }
+
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .nav-back {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+  }
+  .nav-back:hover { background: var(--surface-2); }
+  .nav-title { font-size: 15px; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .nav-actions { display: flex; gap: 8px; align-items: center; }
+  .icon-btn {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 14px;
+    transition: background 0.15s;
+  }
+  .icon-btn:hover { background: var(--surface-2); }
+
+  .screen-body { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; }
+
+  .toggle {
+    width: 38px; height: 22px;
+    background: var(--surface-3);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle::after {
+    content: '';
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px; left: 3px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle.on::after { left: 19px; }
+  .toggle.disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+
+  .chord-row { display: flex; gap: 8px; }
+  .chord-chip {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    text-align: center;
+    flex: 1;
+  }
+  .chord-chip .chord-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+  .chord-chip .chord-name { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .chord-lines { display: flex; justify-content: center; gap: 2px; margin-top: 4px; }
+  .chord-lines span { width: 2px; height: 16px; background: var(--surface-3); border-radius: 1px; }
+  .chord-lines span:nth-child(2) { height: 20px; }
+  .chord-lines span:nth-child(4) { height: 12px; }
+
+  .btn {
+    display: block; width: 100%;
+    padding: 12px 16px;
+    border-radius: 24px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(0.98); }
+  .btn-filled { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-filled:hover { background: #2a2724; }
+  .btn-outline { background: transparent; }
+
+  .menu-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: background 0.15s;
+  }
+  .menu-item:hover { background: var(--surface-2); }
+  .menu-icon {
+    width: 36px; height: 36px;
+    background: var(--surface-2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .menu-label { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+  .menu-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .track-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .track-row:hover { background: var(--surface-2); }
+  .track-row.selected { border-color: var(--accent); background: #f5f4f2; }
+  .play-btn {
+    width: 28px; height: 28px;
+    background: var(--surface-3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .waveform {
+    flex: 1; height: 28px;
+    display: flex; align-items: center; gap: 1.5px;
+  }
+  .waveform span { flex: 1; background: var(--surface-3); border-radius: 1px; }
+
+  .track-badge {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+    min-width: 28px;
+    text-align: center;
+  }
+  .track-badge.positive { color: #2a5c2a; background: #e6f0e6; }
+  .track-badge.negative { color: #5c2a2a; background: #f0e6e6; }
+  .track-badge.neutral  { color: #4a4a2a; background: #f0f0e0; }
+
+  /* ── Pitch detection ── */
+  .mic-center {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px; padding: 8px 0;
+  }
+  .mic-orb {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px;
+    position: relative;
+  }
+  .mic-pulse {
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    animation: pulse 1.5s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.3); }
+  }
+  .detecting-label { font-size: 13px; color: var(--text-secondary); letter-spacing: 0.03em; }
+
+  /* ── Instruction steps ── */
+  .steps-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .step-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .step-num {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--surface-3);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-primary);
+  }
+  .step-text { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+
+  /* ── Pitch confirmed ── */
+  .confirm-badge {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+  .confirm-badge h2 { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .confirm-badge p { font-size: 12px; color: var(--text-muted); }
+
+  /* ── Track library sort bar ── */
+  .sort-bar {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sort-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .sort-btn {
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  .sort-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ── Pitch legend ── */
+  .pitch-legend {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 8px 10px;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+  .legend-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  .scroll-list { display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── Applied summary screen ── */
+  .summary-card {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .summary-card h2 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 12px; }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-key { color: var(--text-muted); }
+  .summary-val { font-weight: 600; color: var(--text-primary); }
+
+  /* ── Misc ── */
+  .tab-bar {
+    display: flex; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1; padding: 10px 6px;
+    text-align: center; font-size: 12px;
+    color: var(--text-muted); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab.active { color: var(--text-primary); border-bottom-color: var(--accent); font-weight: 600; }
+
+  .transpose-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .transpose-cell {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px; text-align: center;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--text-primary); background: var(--surface);
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .transpose-cell:hover { background: var(--surface-2); }
+  .transpose-cell.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .placeholder-list { display: flex; flex-direction: column; gap: 6px; }
+  .placeholder-row { height: 10px; background: var(--surface-2); border-radius: 4px; }
+  .placeholder-row.short { width: 60%; }
+  .placeholder-row.med { width: 80%; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .info-note {
+    font-size: 11px; color: var(--text-muted);
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    border-left: 3px solid var(--border);
+    line-height: 1.5;
+  }
+
+  .toast {
+    position: absolute; bottom: 16px; left: 16px; right: 16px;
+    background: var(--accent); color: #fff;
+    padding: 12px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; text-align: center;
+    opacity: 0; transform: translateY(8px);
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  .record-btn {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--surface-2); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer; margin: 0 auto;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .record-btn:hover { background: var(--surface-3); transform: scale(1.05); }
+
+  /* ── Change badge (new/updated indicator) ── */
+  .change-pill {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    background: var(--surface-3);
+    color: var(--text-secondary);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 1 · Song Detail
+═══════════════════════════════════════════════════ -->
+<div class="screen active" id="s-song-detail">
+  <div class="nav-bar">
+    <div class="nav-title">song #334</div>
+    <div class="nav-actions">
+      <div class="icon-btn">✏️</div>
+      <div class="icon-btn">☰</div>
+      <div class="icon-btn">♡</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active">Chords</div>
+    <div class="tab">Strumming</div>
+  </div>
+  <div class="screen-body">
+    <div class="chord-row">
+      <div class="chord-chip"><div class="chord-label">C</div><div class="chord-name">C</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">Am</div><div class="chord-name">Am</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">G</div><div class="chord-name">G</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+    </div>
+    <div class="btn">⇅ Adjust</div>
+    <div class="btn" onclick="goTo('s-transpose')">↕ Transpose</div>
+    <div class="btn btn-filled" onclick="goTo('s-vocals-menu')">🎤 Work with Vocals</div>
+    <div style="height:1px;background:var(--border);"></div>
+    <div class="section-label">Practice</div>
+    <div class="toggle-row">
+      <span style="font-size:13px;color:var(--text-secondary)">Practice Vocal Track</span>
+      <div class="toggle disabled" title="Add a vocal track first to enable practice mode"></div>
+    </div>
+    <!-- FIX 1: Explain why toggle is disabled -->
+    <div class="info-note">Add a vocal track using "Work with Vocals" to enable practice mode.</div>
+    <div class="placeholder-list" style="margin-top:4px">
+      <div class="placeholder-row med"></div>
+      <div class="placeholder-row short"></div>
+      <div class="placeholder-row med"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 2 · Vocals Menu
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-vocals-menu">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-song-detail')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-label">Set up vocal track</div>
+    <div class="menu-item" onclick="goTo('s-detecting')">
+      <div class="menu-icon">🎙️</div>
+      <div>
+        <div class="menu-label">Pitch Detection</div>
+        <div class="menu-desc">Sing a note — we'll detect your key</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="goTo('s-vocal-tracks')">
+      <div class="menu-icon">❓</div>
+      <div>
+        <div class="menu-label">Choose Existing Vocal Track</div>
+        <div class="menu-desc">Browse tracks sorted by pitch</div>
+      </div>
+    </div>
+    <div class="menu-item" onclick="goTo('s-recording')">
+      <div class="menu-icon">🔊</div>
+      <div>
+        <div class="menu-label">Use Recording</div>
+        <div class="menu-desc">Upload or record from device</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 3 · Detecting Pitch
+     FIX: Added step-by-step instructions
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-detecting">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-vocals-menu')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="mic-center">
+      <div class="mic-orb">🎤<div class="mic-pulse"></div></div>
+      <div class="detecting-label">Detecting singing pitch…</div>
+    </div>
+
+    <!-- FIX 1: Clear instructions so beginners know exactly what to do -->
+    <div class="section-label">How to get the best result</div>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-text">Take a breath and find a comfortable note in your range.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-text">Sing a steady "ahh" — hold it for 2–3 seconds without wavering.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-text">Keep your phone about 15 cm from your mouth.</div>
+      </div>
+    </div>
+    <div class="btn btn-filled" onclick="goTo('s-pitch-confirmed')" style="margin-top:4px">Simulate: Pitch Detected</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 4 · Pitch Confirmed
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-pitch-confirmed">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-detecting')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="confirm-badge">
+      <h2>Pitch confirmed!</h2>
+      <p>Detected key: A minor · Confidence 94%</p>
+    </div>
+    <div class="btn btn-filled" onclick="goTo('s-vocal-tracks-updated')">View Updated Tabs</div>
+    <div class="btn btn-outline" onclick="goTo('s-vocal-tracks')">View Matching Tracks</div>
+    <div class="btn" onclick="goTo('s-detecting')">Retry</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 5 · Vocal Tracks Library
+     FIX: Sorted by pitch low→high, legend explaining +/−, sort toggle
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-vocal-tracks">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-vocals-menu')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+
+    <!-- FIX 2: Pitch legend so users understand the badges -->
+    <div class="pitch-legend">
+      <div class="legend-item">
+        <span class="legend-badge positive" style="background:#e6f0e6;color:#2a5c2a">+2</span>
+        Higher pitch
+      </div>
+      <div class="legend-item">
+        <span class="legend-badge neutral" style="background:#f0f0e0;color:#4a4a2a">~</span>
+        Original pitch
+      </div>
+      <div class="legend-item">
+        <span class="legend-badge negative" style="background:#f0e6e6;color:#5c2a2a">−2</span>
+        Lower pitch
+      </div>
+    </div>
+
+    <!-- FIX 2: Sort control -->
+    <div class="sort-bar">
+      <span class="sort-label">Sort by pitch:</span>
+      <button class="sort-btn active" id="sort-asc" onclick="sortTracks('asc')">Low → High</button>
+      <button class="sort-btn" id="sort-desc" onclick="sortTracks('desc')">High → Low</button>
+    </div>
+
+    <div class="section-label">Vocal Tracks</div>
+    <div class="scroll-list" id="track-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 6 · Track Selected
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-track-selected">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-vocal-tracks')">← Vocal Tracks</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-label">Selected Track</div>
+    <div class="track-row selected">
+      <div class="play-btn">▶</div>
+      <div class="waveform" id="selected-wave"></div>
+      <div class="track-badge" id="selected-badge">−1</div>
+    </div>
+    <div class="info-note" id="selected-info">This track is pitched −1 semitone below the original recording.</div>
+    <div class="btn btn-outline" onclick="goTo('s-vocal-tracks-updated')">Preview Updated Tabs</div>
+    <div class="btn btn-filled" onclick="goTo('s-applied-summary')">Use This Track</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 7 · Recording
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-recording">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-vocals-menu')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-label">Choose from device</div>
+    <div class="btn" onclick="showToastOn('recording-toast')">Browse device recordings</div>
+    <div style="height:1px;background:var(--border);"></div>
+    <div class="section-label">Live recording</div>
+    <div class="record-btn" onclick="showToastOn('recording-toast')">🎙️</div>
+    <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px">Tap to record</div>
+    <div id="recording-toast" class="toast">Recording saved — select it from "Choose Existing Vocal Track".</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 8 · Applied Summary  ← NEW
+     FIX 3: Clear confirmation of what changed before returning to song
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-applied-summary">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-track-selected')">← Back</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="summary-card">
+      <h2>Vocal track applied ✓</h2>
+      <div class="summary-row">
+        <span class="summary-key">Track pitch</span>
+        <span class="summary-val" id="summary-pitch">−1 semitone</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Song key</span>
+        <span class="summary-val">A minor</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Tabs updated</span>
+        <span class="summary-val">Yes — transposed to match</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Practice mode</span>
+        <span class="summary-val">Now available</span>
+      </div>
+    </div>
+    <div class="info-note">Your chords and tabs now reflect the vocalist's key. Practice mode has been unlocked on the song screen.</div>
+    <div class="btn btn-filled" onclick="goTo('s-song-vocal-active')">Go to Song →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 9 · Song Detail — Vocal Active
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-song-vocal-active">
+  <div class="nav-bar">
+    <div class="nav-title">song #334</div>
+    <div class="nav-actions">
+      <div class="icon-btn">✏️</div>
+      <div class="icon-btn">☰</div>
+      <div class="icon-btn">♡</div>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <div class="tab active">Chords</div>
+    <div class="tab">Strumming</div>
+  </div>
+  <div class="screen-body">
+    <div class="toggle-row">
+      <span style="font-size:13px;color:var(--text-secondary)">Practice Vocal Track</span>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="track-row selected">
+      <div class="play-btn">▶</div>
+      <div class="waveform" id="active-wave"></div>
+      <div class="track-badge negative" id="active-badge">−1</div>
+    </div>
+    <!-- FIX 3: Make it clear tabs are updated/in sync -->
+    <div class="info-note">Chords and tabs are transposed to match the vocal track key (A minor).</div>
+    <div class="chord-row">
+      <div class="chord-chip"><div class="chord-label">C</div><div class="chord-name">C</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">Am</div><div class="chord-name">Am</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">G</div><div class="chord-name">G</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+    </div>
+    <div class="section-label">Tabs <span class="change-pill">Updated</span></div>
+    <div class="placeholder-list">
+      <div class="placeholder-row med"></div>
+      <div class="placeholder-row short"></div>
+      <div class="placeholder-row med"></div>
+      <div class="placeholder-row short"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 10 · Transpose
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-transpose">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-song-detail')">← Transpose</div>
+  </div>
+  <div class="screen-body">
+    <div class="section-label">Select key</div>
+    <div class="transpose-grid" id="transpose-grid"></div>
+    <div class="section-label" style="margin-top:8px">Tabs</div>
+    <div class="placeholder-list">
+      <div class="placeholder-row med"></div>
+      <div class="placeholder-row short"></div>
+      <div class="placeholder-row med"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN 11 · Updated Tabs Preview
+═══════════════════════════════════════════════════ -->
+<div class="screen" id="s-vocal-tracks-updated">
+  <div class="nav-bar">
+    <div class="nav-back" onclick="goTo('s-pitch-confirmed')">← Vocals</div>
+    <div class="nav-actions"><div class="toggle on"></div></div>
+  </div>
+  <div class="screen-body">
+    <div class="section-label">Updated Tabs <span class="change-pill">Preview</span></div>
+    <div class="chord-row">
+      <div class="chord-chip"><div class="chord-label">C</div><div class="chord-name">C</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">Am</div><div class="chord-name">Am</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+      <div class="chord-chip"><div class="chord-label">G</div><div class="chord-name">G</div><div class="chord-lines"><span></span><span></span><span></span><span></span></div></div>
+    </div>
+    <div class="info-note">Transposed to match your detected vocal pitch (A minor).</div>
+    <div class="placeholder-list">
+      <div class="placeholder-row med"></div><div class="placeholder-row short"></div>
+      <div class="placeholder-row med"></div><div class="placeholder-row short"></div>
+      <div class="placeholder-row med"></div>
+    </div>
+    <div class="btn btn-filled" onclick="goTo('s-applied-summary')" style="margin-top:auto">Apply & Continue →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SCREEN NAV
+═══════════════════════════════════════════════════ -->
+<div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:420px">
+  <span style="font-size:11px;color:#9e9b97;margin-bottom:4px;width:100%;text-align:center">JUMP TO SCREEN:</span>
+  <button onclick="goTo('s-song-detail')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Song Detail</button>
+  <button onclick="goTo('s-vocals-menu')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Vocals Menu</button>
+  <button onclick="goTo('s-detecting')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Pitch Detection</button>
+  <button onclick="goTo('s-pitch-confirmed')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Pitch Confirmed</button>
+  <button onclick="goTo('s-vocal-tracks')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Vocal Tracks</button>
+  <button onclick="goTo('s-track-selected')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Track Selected</button>
+  <button onclick="goTo('s-applied-summary')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Applied Summary ✨</button>
+  <button onclick="goTo('s-song-vocal-active')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Song + Vocal Active</button>
+  <button onclick="goTo('s-recording')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Recording</button>
+  <button onclick="goTo('s-transpose')" class="btn" style="width:auto;padding:6px 12px;font-size:11px">Transpose</button>
+</div>
+
+<script>
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function makeWave(el, n = 20) {
+    const h = [8,12,18,24,20,14,22,28,18,12,20,26,22,16,24,18,12,20,14,10];
+    for (let i = 0; i < n; i++) {
+      const span = document.createElement('span');
+      span.style.height = (h[i % h.length]) + 'px';
+      el.appendChild(span);
+    }
+  }
+  document.querySelectorAll('.waveform').forEach(el => makeWave(el));
+
+  // Track data with numeric pitch values for sorting
+  const allTracks = [
+    { pitch: -2, badge: '−2', badgeClass: 'negative', desc: '2 semitones below original' },
+    { pitch: -1, badge: '−1', badgeClass: 'negative', desc: '1 semitone below original' },
+    { pitch:  0, badge: '~',  badgeClass: 'neutral',  desc: 'Original pitch' },
+    { pitch: +1, badge: '+1', badgeClass: 'positive', desc: '1 semitone above original' },
+    { pitch: +2, badge: '+2', badgeClass: 'positive', desc: '2 semitones above original' },
+    { pitch: +3, badge: '+3', badgeClass: 'positive', desc: '3 semitones above original' },
+  ];
+
+  let currentSort = 'asc';
+
+  function renderTracks(sort) {
+    const list = document.getElementById('track-list');
+    list.innerHTML = '';
+    const sorted = [...allTracks].sort((a, b) => sort === 'asc' ? a.pitch - b.pitch : b.pitch - a.pitch);
+    sorted.forEach((t, i) => {
+      const row = document.createElement('div');
+      row.className = 'track-row';
+      const wId = `tw-${i}`;
+      row.innerHTML = `
+        <div class="play-btn">▶</div>
+        <div class="waveform" id="${wId}"></div>
+        <div class="track-badge ${t.badgeClass}">${t.badge}</div>
+      `;
+      row.onclick = () => {
+        document.getElementById('selected-badge').textContent = t.badge;
+        document.getElementById('selected-badge').className = `track-badge ${t.badgeClass}`;
+        document.getElementById('selected-info').textContent = `This track is ${t.desc}.`;
+        document.getElementById('summary-pitch').textContent = `${t.badge} semitone${t.badge === '~' ? '' : 's'}`;
+        document.getElementById('active-badge').textContent = t.badge;
+        document.getElementById('active-badge').className = `track-badge ${t.badgeClass}`;
+        goTo('s-track-selected');
+      };
+      list.appendChild(row);
+      makeWave(document.getElementById(wId));
+    });
+  }
+
+  function sortTracks(dir) {
+    currentSort = dir;
+    document.getElementById('sort-asc').classList.toggle('active', dir === 'asc');
+    document.getElementById('sort-desc').classList.toggle('active', dir === 'desc');
+    renderTracks(dir);
+  }
+
+  renderTracks('asc');
+
+  // Transpose grid
+  const keys = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Am', 'B'];
+  const grid = document.getElementById('transpose-grid');
+  keys.forEach(k => {
+    const cell = document.createElement('button');
+    cell.className = 'transpose-cell' + (k === 'Am' ? ' active' : '');
+    cell.textContent = k;
+    cell.onclick = () => {
+      document.querySelectorAll('.transpose-cell').forEach(c => c.classList.remove('active'));
+      cell.classList.add('active');
+    };
+    grid.appendChild(cell);
+  });
+
+  function showToastOn(toastId) {
+    const t = document.getElementById(toastId);
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
