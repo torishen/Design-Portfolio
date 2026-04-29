@@ -132,7 +132,7 @@ p { font-size: 16px; line-height: 1.8; color: var(--text-2); max-width: 560px; }
 .tag { font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 2px; border: 1px solid var(--border); color: var(--text-3); letter-spacing: 0.05em; }
 .tag.filled { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 500; }
 
-/* ── GIF BLOCK — phone image LEFT, text RIGHT ── */
+/* ── GIF BLOCK — single gif with text to its right ── */
 .gif-block {
   display: flex;
   gap: 36px;
@@ -153,6 +153,32 @@ p { font-size: 16px; line-height: 1.8; color: var(--text-2); max-width: 560px; }
 .gif-text-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; }
 .gif-text h4 { font-family: var(--serif); font-size: 26px; color: var(--text); line-height: 1.2; }
 .gif-text p { font-size: 15px; line-height: 1.8; color: var(--text-2); max-width: none; }
+
+/* ── THREE GIFS SIDE BY SIDE — each column: phone + text ── */
+.gif-trio {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.gif-trio-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.gif-trio-col img {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,166,35,0.04);
+  display: block;
+  margin-bottom: 20px;
+}
+.gif-trio-text { display: flex; flex-direction: column; gap: 8px; }
+.gif-trio-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; }
+.gif-trio-col h4 { font-family: var(--serif); font-size: 22px; color: var(--text); line-height: 1.2; margin-bottom: 8px; }
+.gif-trio-col p { font-size: 14px; line-height: 1.75; color: var(--text-2); max-width: none; }
 
 /* ── ITERATION FLOW ── */
 .iter-flow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 32px 0; }
@@ -195,11 +221,12 @@ footer p { font-family: var(--mono); font-size: 12px; color: var(--text-3); lett
 @media (max-width: 900px) {
   nav { padding: 14px 24px; } .nav-links { display: none; }
   #hero, .section { padding-left: 24px; padding-right: 24px; }
-  .two-col, .three-col { grid-template-columns: 1fr; gap: 20px; }
+  .two-col, .three-col, .gif-trio { grid-template-columns: 1fr; gap: 20px; }
   .hero-meta { gap: 24px; }
   footer { flex-direction: column; gap: 12px; text-align: center; }
   .gif-block { flex-direction: column; }
   .gif-block img { width: 160px; }
+  .gif-trio-col img { max-width: 180px; }
 }
 </style>
 </head>
@@ -512,37 +539,42 @@ footer p { font-family: var(--mono); font-size: 12px; color: var(--text-3); lett
   <!-- EDIT: flows intro -->
   <p class="reveal d1" style="margin-bottom:40px;max-width:600px;">The "Work with Vocals" menu on Ultimate Guitar offers three distinct entry points, each targeting a different user need and comfort level.</p>
 
-  <!-- GIF 1 — pitch detect -->
-  <div class="gif-block reveal">
-    <img src="pitchdetect.gif" alt="Pitch detection flow">
-    <div class="gif-text">
-      <div class="gif-text-label">Option 1</div>
-      <!-- EDIT: pitch detect heading + body -->
-      <h4>Pitch Detection</h4>
-      <p>The user sings a note into their phone microphone. Ultimate Guitar detects their singing pitch and automatically transposes the tabs to match. Designed for beginners who don't know what key to transpose to — they just sing and the app figures it out. This directly addresses the pitch reference gap identified in research.</p>
-    </div>
-  </div>
+  <!-- THREE GIFS SIDE BY SIDE -->
+  <div class="gif-trio reveal">
 
-  <!-- GIF 2 — choose existing -->
-  <div class="gif-block reveal">
-    <img src="chooseexisting.gif" alt="Choose existing track">
-    <div class="gif-text">
-      <div class="gif-text-label">Option 2</div>
-      <!-- EDIT: choose existing heading + body -->
-      <h4>Choose Existing Track</h4>
-      <p>Browse pre-existing vocal tracks sorted by pitch from low to high. Once selected, the tabs transpose automatically to match. Designed for band players who want to quickly match a song to their vocalist's known range without using the microphone. The pitch-sorted order was a direct response to user testing feedback.</p>
+    <!-- GIF 1 — pitch detect -->
+    <div class="gif-trio-col">
+      <img src="pitchdetect.gif" alt="Pitch detection flow">
+      <div class="gif-trio-text">
+        <div class="gif-trio-label">Option 1</div>
+        <!-- EDIT: pitch detect heading + body -->
+        <h4>Pitch Detection</h4>
+        <p>The user sings a note into their phone microphone. Ultimate Guitar detects their singing pitch and automatically transposes the tabs to match. Designed for beginners who don't know what key to transpose to — they just sing and the app figures it out.</p>
+      </div>
     </div>
-  </div>
 
-  <!-- GIF 3 — upload or record -->
-  <div class="gif-block reveal">
-    <img src="uploadorrecord.gif" alt="Upload or record">
-    <div class="gif-text">
-      <div class="gif-text-label">Option 3</div>
-      <!-- EDIT: upload/record heading + body -->
-      <h4>Upload or Record</h4>
-      <p>Upload an existing audio file from the device or record a new one live in the app. Ultimate Guitar then detects the pitch of that recording and transposes the tabs to match. Built for users who already have a reference vocal — a bandmate's voice note, a rehearsal recording, or their own prior recording — and want to practice with it directly.</p>
+    <!-- GIF 2 — choose existing -->
+    <div class="gif-trio-col">
+      <img src="chooseexisting.gif" alt="Choose existing track">
+      <div class="gif-trio-text">
+        <div class="gif-trio-label">Option 2</div>
+        <!-- EDIT: choose existing heading + body -->
+        <h4>Choose Existing Track</h4>
+        <p>Browse pre-existing vocal tracks sorted by pitch from low to high. Once selected, tabs transpose automatically. Designed for band players who want to quickly match a song to their vocalist's known range without using the microphone.</p>
+      </div>
     </div>
+
+    <!-- GIF 3 — upload or record -->
+    <div class="gif-trio-col">
+      <img src="uploadorrecord.gif" alt="Upload or record">
+      <div class="gif-trio-text">
+        <div class="gif-trio-label">Option 3</div>
+        <!-- EDIT: upload/record heading + body -->
+        <h4>Upload or Record</h4>
+        <p>Upload an audio file from the device or record live in the app. Ultimate Guitar detects the pitch and transposes the tabs to match. Built for users who already have a reference vocal and want to practice directly with it.</p>
+      </div>
+    </div>
+
   </div>
 
   <!-- Iterations -->
