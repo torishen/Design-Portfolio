@@ -61,7 +61,8 @@ export default function Home() {
           </p>
           <p className={styles.aboutDesc}>
             I build things end-to-end — from ML research and data pipelines to React frontends and interactive prototypes.
-            Product design is new territory for me (I picked it up in 2026), but thinking about how things <em>feel</em> turns out to be just as interesting as making them <em>work</em>. More to come.
+            Product design is new territory for me (I picked it up in 2026), but thinking about how things <em>feel</em> turns out to be just as interesting as making them <em>work</em>. 
+            More to come...
           </p>
           <div className={styles.aboutSkills}>
             {['Figma','React','HTML / CSS','Python','UX Research','TypeScript'].map(s => (
@@ -70,7 +71,7 @@ export default function Home() {
           </div>
         </div>
         <div className={styles.aboutRight}>
-          <a href="/Tori_Shen_Resume.docx" download className={`${styles.btn} ${styles.btnPrimary}`}>
+          <a href={`${import.meta.env.BASE_URL}Tori_Shen_Resume.pdf`} download className={`${styles.btn} ${styles.btnPrimary}`}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
               <path d="M7 2v8M7 10L4 7M7 10l3-3M2 12h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
