@@ -1,0 +1,9 @@
+.bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--gold);
+  z-index: 999;
+  transition: width 0.08s linear;
+  box-shadow: 0 0 12px rgba(201, 168, 76, 0.6);
+}
