@@ -141,7 +141,7 @@ export default function GroupProject() {
           <h3 style={{fontFamily:'var(--serif)',fontSize:'clamp(22px,2.4vw,36px)',color:'var(--text)',marginBottom:'14px'}}>Hand-drawn flow</h3>
           <p style={{marginBottom:'28px',maxWidth:'640px'}}>Every screen state, navigation path, and branch sketched before opening any design tool.</p>
           <div style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--r)',display:'inline-block'}}>
-            <img src="/assets/sketch.png" alt="Lo-fi UI storyboard sketch" style={{width:'auto',maxWidth:'600px',display:'block',borderRadius:'var(--r)'}} />
+            <img src={`${import.meta.env.BASE_URL}assets/sketch.png`} alt="Lo-fi UI storyboard sketch" style={{width:'auto',maxWidth:'600px',display:'block',borderRadius:'var(--r)'}} />
           </div>
         </div>
       </section>
@@ -160,7 +160,7 @@ export default function GroupProject() {
           </div>
           <div className="reveal d1">
             <div className={styles.gifBlock} style={{border:'none',padding:0}}>
-              <img src="/assets/goback.gif" alt="Go back screen interaction" />
+              <img src={`${import.meta.env.BASE_URL}assets/goback.gif`} alt="Go back screen interaction" />
               <div className={styles.gifText}>
                 <div className={styles.gifTextLabel}>Design Decision</div>
                 <h4>"Work with Vocals" Button Prominence</h4>
@@ -176,9 +176,9 @@ export default function GroupProject() {
         <p className="reveal d1" style={{marginBottom:'40px',maxWidth:'900px'}}>Three distinct flows, each for a different user: the beginner who doesn't know their key, the band player matching a vocalist's range, and the user who already has a reference recording.</p>
         <div className={`${styles.gifTrio} reveal`}>
           {[
-            { label:'Option 1', img:'/assets/pitchdetect.gif', alt:'Pitch detection flow', title:'Pitch Detection', body:'Sing into the microphone — the app detects pitch and transposes tabs automatically. For players who don\'t know their key.' },
-            { label:'Option 2', img:'/assets/chooseexisting.gif', alt:'Choose existing track', title:'Choose Existing Track', body:'Browse tracks ordered by pitch, low to high. Select one and tabs adjust. For band players matching a vocalist\'s known range.' },
-            { label:'Option 3', img:'/assets/uploadorrecord.gif', alt:'Upload or record', title:'Upload or Record', body:'Upload a file or record live. The app extracts pitch and transposes accordingly. For users who already have a reference recording.' },
+            { label:'Option 1', img:`${import.meta.env.BASE_URL}assets/pitchdetect.gif`, alt:'Pitch detection flow', title:'Pitch Detection', body:'Sing into the microphone — the app detects pitch and transposes tabs automatically. For players who don\'t know their key.' },
+            { label:'Option 2', img:`${import.meta.env.BASE_URL}assets/chooseexisting.gif`, alt:'Choose existing track', title:'Choose Existing Track', body:'Browse tracks ordered by pitch, low to high. Select one and tabs adjust. For band players matching a vocalist\'s known range.' },
+            { label:'Option 3', img:`${import.meta.env.BASE_URL}assets/uploadorrecord.gif`, alt:'Upload or record', title:'Upload or Record', body:'Upload a file or record live. The app extracts pitch and transposes accordingly. For users who already have a reference recording.' },
           ].map(({ label, img, alt, title, body }) => (
             <div key={label} className={styles.gifTrioCol}>
               <img src={img} alt={alt} />

@@ -120,19 +120,19 @@ export default function PoliticalTheorists() {
         <p className="reveal d2" style={{marginBottom:'64px',maxWidth:'800px'}}>GIF walkthroughs of each key screen. The full interactive prototype is linked at the bottom.</p>
 
         {[
-          { num:'Feature 01', img:'/assets/bytheoristbyideology.gif', alt:'By Theorist and By Ideology tab switch', flip:false,
+          { num:'Feature 01', img:`${import.meta.env.BASE_URL}assets/bytheoristbyideology.gif`, alt:'By Theorist and By Ideology tab switch', flip:false,
             title:'Browse by Theorist or by Ideology',
             body:'Two views of the library: by theorist, or filtered by ideology (Liberalism, Communism, Conservatism, Anarchism) via a scrollable chip strip. The filter persists while browsing.' },
-          { num:'Feature 02', img:'/assets/johnlocke.gif', alt:'John Locke lesson card and content', flip:true,
+          { num:'Feature 02', img:`${import.meta.env.BASE_URL}assets/johnlocke.gif`, alt:'John Locke lesson card and content', flip:true,
             title:'Lesson Card → Content → Quiz Entry',
             body:'Lesson Detail shows the theorist portrait, ideology tags, and completion state, with a pinned Start Lesson CTA. Content is scrollable with a reading progress bar fixed at top.' },
-          { num:'Feature 03', img:'/assets/incorrect.gif', alt:'Incorrect answer feedback', flip:false,
+          { num:'Feature 03', img:`${import.meta.env.BASE_URL}assets/incorrect.gif`, alt:'Incorrect answer feedback', flip:false,
             title:'Incorrect Answer — Feedback & Retry',
             body:'Wrong answers highlight red on tap. The feedback screen reveals the correct answer with an explanation callout, then offers Try Again or Next Question.' },
-          { num:'Feature 04', img:'/assets/correct.gif', alt:'Correct answer and lesson complete', flip:true,
+          { num:'Feature 04', img:`${import.meta.env.BASE_URL}assets/correct.gif`, alt:'Correct answer and lesson complete', flip:true,
             title:'Correct Answer → Lesson Complete',
             body:'Correct answers confirm with a green ✓ and a gold explanation box. The final question lands on a Lesson Complete screen with two paths: keep learning or view progress.' },
-          { num:'Feature 05', img:'/assets/viewprogress.gif', alt:'Progress tracker', flip:false,
+          { num:'Feature 05', img:`${import.meta.env.BASE_URL}assets/viewprogress.gif`, alt:'Progress tracker', flip:false,
             title:'Progress Tracker',
             body:'Two donut charts show completion across theorists and ideologies. Each thinker has a named progress bar and percentage — a clear read on what\'s been covered and what\'s left.' },
         ].map(({ num, img, alt, flip, title, body }) => (
