@@ -27,7 +27,7 @@ const PROJECTS = [
     tag: 'Web Development',
     title: ['Chinese Food', '& Belonging'],
     desc: 'A podcast documentary website exploring food, identity, and belonging in the Chinese diaspora. Original audio, archival imagery, and immersive editorial design.',
-    href: 'https://torishen.github.io/Chinese-Food-Culture-Final-Project/',
+    href: 'https://torishen.github.io/Web-Documentary-Food-and-Belonging/',
     github: 'https://github.com/torishen/Web-Documentary-Food-and-Belonging',
     accent: 'terra',
     ctaLabel: 'Visit Site',
